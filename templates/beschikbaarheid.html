@@ -132,7 +132,7 @@ async function loadAvailability(){
 
     const result =
         await api(
-            "/get-availability?photographer_id="
+            "/availability?photographer_id="
             + photographer_id
         );
 
@@ -215,7 +215,7 @@ async function saveAvailability(){
 
     const result =
         await api(
-            "/save-availability",
+            "/availability",
             {
 
                 method:"POST",
