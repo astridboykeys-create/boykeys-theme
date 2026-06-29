@@ -1,1 +1,255 @@
+<!--
+    templateType: page
+    isAvailableForNewContent: true
+    label: Beschikbaarheid
+-->
 
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Beschikbaarheid</title>
+
+    <link rel="stylesheet" href="../css/main.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Mijn beschikbaarheid</h1>
+
+    <div class="card">
+
+        <div id="days"></div>
+
+        <p class="mt-20">
+            <button id="saveButton">
+                Werkrooster opslaan
+            </button>
+        </p>
+
+    </div>
+
+</div>
+
+<script src="../js/app.js"></script>
+
+<script>
+
+//
+// Tijdelijk voor testen
+//
+const photographer_id = "790673787102";
+
+// Later wordt dit:
+//
+// const photographer_id = "{{ contact.hs_object_id }}";
+
+const week = [
+
+    ["monday","Maandag"],
+    ["tuesday","Dinsdag"],
+    ["wednesday","Woensdag"],
+    ["thursday","Donderdag"],
+    ["friday","Vrijdag"],
+    ["saturday","Zaterdag"],
+    ["sunday","Zondag"]
+
+];
+
+const container =
+    document.getElementById("days");
+
+
+//
+// Pagina bouwen
+//
+
+week.forEach(day=>{
+
+    container.innerHTML += `
+
+    <div class="row">
+
+        <div class="col">
+
+            <strong>${day[1]}</strong>
+
+        </div>
+
+        <div class="col">
+
+            <label>
+
+                <input
+                    type="checkbox"
+                    id="${day[0]}_enabled">
+
+                Werken
+
+            </label>
+
+        </div>
+
+        <div class="col">
+
+            <input
+                type="time"
+                id="${day[0]}_start"
+                value="09:00">
+
+        </div>
+
+        <div class="col">
+
+            <input
+                type="time"
+                id="${day[0]}_end"
+                value="17:00">
+
+        </div>
+
+    </div>
+
+    `;
+
+});
+
+
+//
+// Werkrooster ophalen
+//
+
+async function loadAvailability(){
+
+    const result =
+        await api(
+            "/get-availability?photographer_id="
+            + photographer_id
+        );
+
+    if(!result.success){
+
+        return;
+
+    }
+
+    const working =
+        result.data.working_hours;
+
+    week.forEach(day=>{
+
+        const key = day[0];
+
+        if(!working[key]){
+
+            return;
+
+        }
+
+        document.getElementById(
+            key+"_enabled"
+        ).checked =
+            working[key].enabled;
+
+        document.getElementById(
+            key+"_start"
+        ).value =
+            working[key].start;
+
+        document.getElementById(
+            key+"_end"
+        ).value =
+            working[key].end;
+
+    });
+
+}
+
+
+//
+// Opslaan
+//
+
+document
+.getElementById("saveButton")
+.addEventListener("click", saveAvailability);
+
+
+async function saveAvailability(){
+
+    const working_hours = {};
+
+    week.forEach(day=>{
+
+        const key = day[0];
+
+        working_hours[key] = {
+
+            enabled:
+                document.getElementById(
+                    key+"_enabled"
+                ).checked,
+
+            start:
+                document.getElementById(
+                    key+"_start"
+                ).value,
+
+            end:
+                document.getElementById(
+                    key+"_end"
+                ).value
+
+        };
+
+    });
+
+    const result =
+        await api(
+            "/save-availability",
+            {
+
+                method:"POST",
+
+                body:JSON.stringify({
+
+                    photographer_id,
+
+                    working_hours
+
+                })
+
+            }
+        );
+
+    if(result.success){
+
+        showMessage(
+            "Werkrooster opgeslagen."
+        );
+
+    }
+
+}
+
+
+//
+// Start
+//
+
+loadAvailability();
+
+</script>
+
+</body>
+
+</html>
